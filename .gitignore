@@ -1,0 +1,8 @@
+docker-compose.yml
+.vscode/
+.env
+.idea
+.DS_Store
+*.png
+*.pdf
+.history
