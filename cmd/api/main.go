@@ -6,10 +6,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/go-playground/validator/v10"
 	files "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/whitehead421/todo-backend/docs"
+	entities "github.com/whitehead421/todo-backend/pkg/entities"
 )
+
+var validate *validator.Validate
 
 // @title Todo API
 // @version 1.0
@@ -36,7 +40,28 @@ func main() {
 // @Success 200 {object} entities.TodoResponse
 // @Router / [post]
 func CreateTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Get Todo")
+	var todoRequest entities.TodoRequest
+
+	if err := context.ShouldBindJSON(&todoRequest); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validate = validator.New()
+	if err := validate.Struct(todoRequest); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	todoResponse := entities.TodoResponse{
+		ID:          1,
+		Description: todoRequest.Description,
+		Status:      "pending",
+		CreatedAt:   "2024-07-11",
+		UpdatedAt:   "2024-07-11",
+	}
+
+	context.JSON(http.StatusOK, todoResponse)
 }
 
 // @Summary Get todo
