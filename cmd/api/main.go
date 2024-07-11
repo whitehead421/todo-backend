@@ -20,10 +20,7 @@ func main() {
 	env := common.GetEnvironmentVariables()
 
 	// Connect to database
-	_, err := common.ConnectDatabase(env.DatabaseDsn)
-	if err != nil {
-		log.Panic("Error connecting to database")
-	}
+	common.ConnectDatabase(env.DatabaseDsn)
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
