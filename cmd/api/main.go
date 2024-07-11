@@ -26,7 +26,7 @@ func main() {
 	r := gin.Default()
 
 	r.POST("", handlers.CreateTodo)
-	r.GET("", handlers.ReadTodo)
+	r.GET("/:id", handlers.ReadTodo)
 	r.PUT("", handlers.UpdateTodo)
 	r.DELETE("", handlers.DeleteTodo)
 

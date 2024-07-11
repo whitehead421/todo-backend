@@ -58,9 +58,28 @@ func CreateTodo(context *gin.Context) {
 // @Summary Get todo
 // @Description Get todo
 // @Produce  json
-// @Router / [get]
+// @Param id path string true "Todo ID"
+// @Success 200 {object} entities.TodoResponse
+// @Router /{id} [get]
 func ReadTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Read Todo")
+	id := context.Param("id")
+	var todo models.Todo
+
+	result := common.DB.First(&todo, id)
+	if result.Error != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	todoResponse := entities.TodoResponse{
+		ID:          todo.ID,
+		Description: todo.Description,
+		Status:      todo.Status,
+		CreatedAt:   todo.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   todo.UpdatedAt.Format(time.RFC3339),
+	}
+
+	context.JSON(http.StatusOK, todoResponse)
 }
 
 // @Summary Update todo
