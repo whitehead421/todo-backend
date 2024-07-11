@@ -9,7 +9,7 @@ import (
 
 type Environment struct {
 	ApplicationPort string
-	DatabaseUrl     string
+	DatabaseDsn     string
 }
 
 func ParseVariable(key string, required bool, dft string) string {
@@ -32,6 +32,6 @@ func ParseVariable(key string, required bool, dft string) string {
 func GetEnvironmentVariables() *Environment {
 	return &Environment{
 		ApplicationPort: ParseVariable("APPLICATION_PORT", false, "8000"),
-		DatabaseUrl:     ParseVariable("DATABASE_URL", true, ""),
+		DatabaseDsn:     ParseVariable("DATABASE_DSN", true, ""),
 	}
 }

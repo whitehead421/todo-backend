@@ -10,6 +10,7 @@ import (
 	files "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/whitehead421/todo-backend/docs"
+	"github.com/whitehead421/todo-backend/pkg/common"
 	entities "github.com/whitehead421/todo-backend/pkg/entities"
 )
 
@@ -19,6 +20,14 @@ var validate *validator.Validate
 // @version 1.0
 // @description This is a simple todo API
 func main() {
+	env := common.GetEnvironmentVariables()
+
+	// Connect to database
+	_, err := common.ConnectDatabase(env.DatabaseDsn)
+	if err != nil {
+		log.Panic("Error connecting to database")
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
