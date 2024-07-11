@@ -2,10 +2,13 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/whitehead421/todo-backend/pkg/common"
 	"github.com/whitehead421/todo-backend/pkg/entities"
+	"github.com/whitehead421/todo-backend/pkg/models"
 )
 
 var validate *validator.Validate
@@ -30,12 +33,23 @@ func CreateTodo(context *gin.Context) {
 		return
 	}
 
-	todoResponse := entities.TodoResponse{
-		ID:          1,
+	todo := models.Todo{
 		Description: todoRequest.Description,
-		Status:      "pending",
-		CreatedAt:   "2024-07-11",
-		UpdatedAt:   "2024-07-11",
+		Status:      string(entities.Pending),
+	}
+
+	result := common.DB.Create(&todo)
+	if result.Error != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	todoResponse := entities.TodoResponse{
+		ID:          todo.ID,
+		Description: todo.Description,
+		Status:      todo.Status,
+		CreatedAt:   todo.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   todo.UpdatedAt.Format(time.RFC3339),
 	}
 
 	context.JSON(http.StatusOK, todoResponse)
