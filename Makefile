@@ -1,7 +1,7 @@
 all: swag run
 
 swag:
-	swag init --parseDependency -d ./cmd/api
+	swag init --parseDependency -g main.go -d ./cmd/api,./internal/handlers
 
 run:
 	go run cmd/api/main.go
