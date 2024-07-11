@@ -1,20 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/go-playground/validator/v10"
 	files "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "github.com/whitehead421/todo-backend/docs"
+	"github.com/whitehead421/todo-backend/internal/handlers"
 	"github.com/whitehead421/todo-backend/pkg/common"
-	entities "github.com/whitehead421/todo-backend/pkg/entities"
 )
-
-var validate *validator.Validate
 
 // @title Todo API
 // @version 1.0
@@ -31,68 +28,13 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	r.POST("", CreateTodo)
-	r.GET("", ReadTodo)
-	r.PUT("", UpdateTodo)
-	r.DELETE("", DeleteTodo)
+	r.POST("", handlers.CreateTodo)
+	r.GET("", handlers.ReadTodo)
+	r.PUT("", handlers.UpdateTodo)
+	r.DELETE("", handlers.DeleteTodo)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(files.Handler))
 
 	log.Default().Println("Server running on port 8080")
-	r.Run(":8080")
-}
-
-// @Summary Create todo
-// @Description Create todo
-// @Produce  json
-// @Param todo body entities.TodoRequest true "Todo Request"
-// @Success 200 {object} entities.TodoResponse
-// @Router / [post]
-func CreateTodo(context *gin.Context) {
-	var todoRequest entities.TodoRequest
-
-	if err := context.ShouldBindJSON(&todoRequest); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	validate = validator.New()
-	if err := validate.Struct(todoRequest); err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	todoResponse := entities.TodoResponse{
-		ID:          1,
-		Description: todoRequest.Description,
-		Status:      "pending",
-		CreatedAt:   "2024-07-11",
-		UpdatedAt:   "2024-07-11",
-	}
-
-	context.JSON(http.StatusOK, todoResponse)
-}
-
-// @Summary Get todo
-// @Description Get todo
-// @Produce  json
-// @Router / [get]
-func ReadTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Read Todo")
-}
-
-// @Summary Update todo
-// @Description Update todo
-// @Produce  json
-// @Router / [put]
-func UpdateTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Update Todo")
-}
-
-// @Summary Delete todo
-// @Description Delete todo
-// @Produce  json
-// @Router / [delete]
-func DeleteTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Delete Todo")
+	r.Run(fmt.Sprintf(":%s", env.ApplicationPort))
 }
