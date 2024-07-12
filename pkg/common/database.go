@@ -1,14 +1,20 @@
 package common
 
 import (
+	"log"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func ConnectDatabase(dsn string) (*gorm.DB, error) {
+var DB *gorm.DB
+
+func ConnectDatabase(dsn string) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		log.Panic("Error connecting to database")
 	}
-	return db, nil
+
+	log.Println("Connected to database")
+	DB = db
 }
