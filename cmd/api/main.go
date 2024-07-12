@@ -19,6 +19,10 @@ import (
 func main() {
 	env := common.GetEnvironmentVariables()
 
+	// Initialize logger
+	logger := common.InitLogger()
+	defer logger.Sync() // flushes buffer, if any
+
 	// Connect to database
 	common.ConnectDatabase(env.DatabaseDsn)
 
