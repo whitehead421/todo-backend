@@ -15,7 +15,7 @@ import (
 var validate *validator.Validate
 
 // @Summary Create todo
-// @Description Create todo
+// @Description Create a new todo item with a description and a default status of pending
 // @Produce  json
 // @Param todo body entities.TodoRequest true "Todo Request"
 // @Success 200 {object} entities.TodoResponse
@@ -57,7 +57,7 @@ func CreateTodo(context *gin.Context) {
 }
 
 // @Summary Get todo
-// @Description Get todo
+// @Description Get details of a specific todo item by its ID
 // @Produce  json
 // @Param id path string true "Todo ID"
 // @Success 200 {object} entities.TodoResponse
@@ -84,7 +84,7 @@ func ReadTodo(context *gin.Context) {
 }
 
 // @Summary Update todo
-// @Description Update todo
+// @Description Update the description and status of an existing todo item by its ID
 // @Produce  json
 // @Param id path string true "Todo ID"
 // @Param todo body entities.TodoUpdateRequest true "Todo Request"
@@ -144,10 +144,10 @@ func UpdateTodo(context *gin.Context) {
 }
 
 // @Summary Delete todo
-// @Description Delete todo
+// @Description Delete an existing todo item by its ID
 // @Produce  json
 // @Param id path string true "Todo ID"
-// @Success 204
+// @Success 204 "No Content"
 // @Router /{id} [delete]
 func DeleteTodo(context *gin.Context) {
 	id := context.Param("id")
