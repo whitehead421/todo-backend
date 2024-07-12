@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -85,9 +86,61 @@ func ReadTodo(context *gin.Context) {
 // @Summary Update todo
 // @Description Update todo
 // @Produce  json
-// @Router / [put]
+// @Param id path string true "Todo ID"
+// @Param todo body entities.TodoUpdateRequest true "Todo Request"
+// @Success 200 {object} entities.TodoResponse
+// @Router /{id} [put]
 func UpdateTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Update Todo")
+	id := context.Param("id")
+	// Check if ID is valid
+	ID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	// Check if todo to update exists, if not return 404
+	result := common.DB.First(&models.Todo{ID: ID})
+	if result.Error != nil {
+		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	var todoUpdateRequest entities.TodoUpdateRequest
+
+	if err := context.ShouldBindJSON(&todoUpdateRequest); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	validate = validator.New()
+	if err := validate.StructPartial(todoUpdateRequest); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	todo := models.Todo{
+		ID:          ID,
+		Description: todoUpdateRequest.Description,
+		Status:      string(todoUpdateRequest.Status),
+	}
+
+	// Update todo
+	result = common.DB.Save(&todo)
+	if result.Error != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	todoResponse := entities.TodoResponse{
+		ID:          todo.ID,
+		Description: todo.Description,
+		Status:      todo.Status,
+		CreatedAt:   todo.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   todo.UpdatedAt.Format(time.RFC3339),
+	}
+
+	context.JSON(http.StatusOK, todoResponse)
 }
 
 // @Summary Delete todo

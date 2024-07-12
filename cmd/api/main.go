@@ -27,7 +27,7 @@ func main() {
 
 	r.POST("", handlers.CreateTodo)
 	r.GET("/:id", handlers.ReadTodo)
-	r.PUT("", handlers.UpdateTodo)
+	r.PUT("/:id", handlers.UpdateTodo)
 	r.DELETE("", handlers.DeleteTodo)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(files.Handler))
