@@ -146,7 +146,31 @@ func UpdateTodo(context *gin.Context) {
 // @Summary Delete todo
 // @Description Delete todo
 // @Produce  json
-// @Router / [delete]
+// @Param id path string true "Todo ID"
+// @Success 204
+// @Router /{id} [delete]
 func DeleteTodo(context *gin.Context) {
-	context.JSON(http.StatusOK, "Delete Todo")
+	id := context.Param("id")
+
+	// Check if ID is valid
+	ID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	// Check if todo to delete exists, if not return 404
+	result := common.DB.First(&models.Todo{ID: ID})
+	if result.Error != nil {
+		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	result = common.DB.Delete(&models.Todo{ID: ID})
+	if result.Error != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "Todo deleted successfully"})
 }
