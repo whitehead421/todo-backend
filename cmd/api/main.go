@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	files "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -19,6 +19,10 @@ import (
 func main() {
 	env := common.GetEnvironmentVariables()
 
+	// Initialize logger
+	logger := common.InitLogger()
+	defer logger.Sync() // flushes buffer, if any
+
 	// Connect to database
 	common.ConnectDatabase(env.DatabaseDsn)
 
@@ -32,6 +36,9 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(files.Handler))
 
-	log.Default().Println("Server running on port 8080")
+	zap.L().Info(
+		"Server running",
+		zap.String("port", env.ApplicationPort),
+	)
 	r.Run(fmt.Sprintf(":%s", env.ApplicationPort))
 }
