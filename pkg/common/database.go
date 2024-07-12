@@ -1,8 +1,7 @@
 package common
 
 import (
-	"log"
-
+	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -12,9 +11,12 @@ var DB *gorm.DB
 func ConnectDatabase(dsn string) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Panic("Error connecting to database")
+		zap.L().Fatal(
+			"Failed to connect to database",
+			zap.Error(err),
+		)
 	}
 
-	log.Println("Connected to database")
+	zap.L().Info("Connected to database")
 	DB = db
 }

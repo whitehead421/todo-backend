@@ -10,6 +10,7 @@ import (
 	"github.com/whitehead421/todo-backend/pkg/common"
 	"github.com/whitehead421/todo-backend/pkg/entities"
 	"github.com/whitehead421/todo-backend/pkg/models"
+	"go.uber.org/zap"
 )
 
 var validate *validator.Validate
@@ -24,12 +25,20 @@ func CreateTodo(context *gin.Context) {
 	var todoRequest entities.TodoRequest
 
 	if err := context.ShouldBindJSON(&todoRequest); err != nil {
+		zap.L().Error("Failed to bind JSON",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	validate = validator.New()
 	if err := validate.Struct(todoRequest); err != nil {
+		zap.L().Error("Validation error",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -41,6 +50,10 @@ func CreateTodo(context *gin.Context) {
 
 	result := common.DB.Create(&todo)
 	if result.Error != nil {
+		zap.L().Error("Failed to create todo",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
@@ -52,6 +65,11 @@ func CreateTodo(context *gin.Context) {
 		CreatedAt:   todo.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   todo.UpdatedAt.Format(time.RFC3339),
 	}
+
+	zap.L().Info("Todo created successfully",
+		zap.Uint64("todo ID", todo.ID),
+		zap.String("url path", context.Request.URL.Path),
+	)
 
 	context.JSON(http.StatusOK, todoResponse)
 }
@@ -68,7 +86,11 @@ func ReadTodo(context *gin.Context) {
 
 	result := common.DB.First(&todo, id)
 	if result.Error != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		zap.L().Error("Failed to find todo",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -79,6 +101,11 @@ func ReadTodo(context *gin.Context) {
 		CreatedAt:   todo.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   todo.UpdatedAt.Format(time.RFC3339),
 	}
+
+	zap.L().Info("Todo found successfully",
+		zap.Uint64("todo ID", todo.ID),
+		zap.String("url path", context.Request.URL.Path),
+	)
 
 	context.JSON(http.StatusOK, todoResponse)
 }
@@ -95,6 +122,10 @@ func UpdateTodo(context *gin.Context) {
 	// Check if ID is valid
 	ID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
+		zap.L().Error("Invalid ID",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
@@ -102,6 +133,10 @@ func UpdateTodo(context *gin.Context) {
 	// Check if todo to update exists, if not return 404
 	result := common.DB.First(&models.Todo{ID: ID})
 	if result.Error != nil {
+		zap.L().Error("Failed to find todo to update",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
 	}
@@ -109,12 +144,20 @@ func UpdateTodo(context *gin.Context) {
 	var todoUpdateRequest entities.TodoUpdateRequest
 
 	if err := context.ShouldBindJSON(&todoUpdateRequest); err != nil {
+		zap.L().Error("Failed to bind JSON",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	validate = validator.New()
 	if err := validate.StructPartial(todoUpdateRequest); err != nil {
+		zap.L().Error("Validation error",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -128,6 +171,10 @@ func UpdateTodo(context *gin.Context) {
 	// Update todo
 	result = common.DB.Save(&todo)
 	if result.Error != nil {
+		zap.L().Error("Failed to update todo",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
@@ -139,6 +186,11 @@ func UpdateTodo(context *gin.Context) {
 		CreatedAt:   todo.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   todo.UpdatedAt.Format(time.RFC3339),
 	}
+
+	zap.L().Info("Todo updated successfully",
+		zap.Uint64("todo ID", todo.ID),
+		zap.String("url path", context.Request.URL.Path),
+	)
 
 	context.JSON(http.StatusOK, todoResponse)
 }
@@ -155,6 +207,10 @@ func DeleteTodo(context *gin.Context) {
 	// Check if ID is valid
 	ID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
+		zap.L().Error("Invalid ID",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
@@ -162,15 +218,28 @@ func DeleteTodo(context *gin.Context) {
 	// Check if todo to delete exists, if not return 404
 	result := common.DB.First(&models.Todo{ID: ID})
 	if result.Error != nil {
+		zap.L().Error("Failed to find todo to delete",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
 	}
 
 	result = common.DB.Delete(&models.Todo{ID: ID})
 	if result.Error != nil {
+		zap.L().Error("Failed to delete todo",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
+
+	zap.L().Info("Todo deleted successfully",
+		zap.Uint64("todo ID", ID),
+		zap.String("url path", context.Request.URL.Path),
+	)
 
 	context.JSON(http.StatusOK, gin.H{"message": "Todo deleted successfully"})
 }
