@@ -15,14 +15,8 @@ import (
 
 var validate *validator.Validate
 
-// @Summary Create todo
-// @Description Create a new todo item with a description and a default status of pending
-// @Produce  json
-// @Param todo body entities.TodoRequest true "Todo Request"
-// @Success 200 {object} entities.TodoResponse
-// @Router / [post]
 func CreateTodo(context *gin.Context) {
-	var todoRequest entities.TodoRequest
+	var todoRequest models.TodoRequest
 
 	if err := context.ShouldBindJSON(&todoRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
@@ -43,9 +37,9 @@ func CreateTodo(context *gin.Context) {
 		return
 	}
 
-	todo := models.Todo{
+	todo := entities.Todo{
 		Description: todoRequest.Description,
-		Status:      string(entities.Pending),
+		Status:      string(models.Pending),
 	}
 
 	result := common.DB.Create(&todo)
@@ -58,7 +52,7 @@ func CreateTodo(context *gin.Context) {
 		return
 	}
 
-	todoResponse := entities.TodoResponse{
+	todoResponse := models.TodoResponse{
 		ID:          todo.ID,
 		Description: todo.Description,
 		Status:      todo.Status,
@@ -74,15 +68,9 @@ func CreateTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-// @Summary Get todo
-// @Description Get details of a specific todo item by its ID
-// @Produce  json
-// @Param id path string true "Todo ID"
-// @Success 200 {object} entities.TodoResponse
-// @Router /{id} [get]
 func ReadTodo(context *gin.Context) {
 	id := context.Param("id")
-	var todo models.Todo
+	var todo entities.Todo
 
 	result := common.DB.First(&todo, id)
 	if result.Error != nil {
@@ -94,7 +82,7 @@ func ReadTodo(context *gin.Context) {
 		return
 	}
 
-	todoResponse := entities.TodoResponse{
+	todoResponse := models.TodoResponse{
 		ID:          todo.ID,
 		Description: todo.Description,
 		Status:      todo.Status,
@@ -110,13 +98,6 @@ func ReadTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-// @Summary Update todo
-// @Description Update the description and status of an existing todo item by its ID
-// @Produce  json
-// @Param id path string true "Todo ID"
-// @Param todo body entities.TodoUpdateRequest true "Todo Request"
-// @Success 200 {object} entities.TodoResponse
-// @Router /{id} [put]
 func UpdateTodo(context *gin.Context) {
 	id := context.Param("id")
 	// Check if ID is valid
@@ -131,7 +112,7 @@ func UpdateTodo(context *gin.Context) {
 	}
 
 	// Check if todo to update exists, if not return 404
-	result := common.DB.First(&models.Todo{ID: ID})
+	result := common.DB.First(&entities.Todo{ID: ID})
 	if result.Error != nil {
 		zap.L().Error("Failed to find todo to update",
 			zap.Error(result.Error),
@@ -141,7 +122,7 @@ func UpdateTodo(context *gin.Context) {
 		return
 	}
 
-	var todoUpdateRequest entities.TodoUpdateRequest
+	var todoUpdateRequest models.TodoUpdateRequest
 
 	if err := context.ShouldBindJSON(&todoUpdateRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
@@ -162,7 +143,7 @@ func UpdateTodo(context *gin.Context) {
 		return
 	}
 
-	todo := models.Todo{
+	todo := entities.Todo{
 		ID:          ID,
 		Description: todoUpdateRequest.Description,
 		Status:      string(todoUpdateRequest.Status),
@@ -179,7 +160,7 @@ func UpdateTodo(context *gin.Context) {
 		return
 	}
 
-	todoResponse := entities.TodoResponse{
+	todoResponse := models.TodoResponse{
 		ID:          todo.ID,
 		Description: todo.Description,
 		Status:      todo.Status,
@@ -195,12 +176,6 @@ func UpdateTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-// @Summary Delete todo
-// @Description Delete an existing todo item by its ID
-// @Produce  json
-// @Param id path string true "Todo ID"
-// @Success 204 "No Content"
-// @Router /{id} [delete]
 func DeleteTodo(context *gin.Context) {
 	id := context.Param("id")
 
@@ -216,7 +191,7 @@ func DeleteTodo(context *gin.Context) {
 	}
 
 	// Check if todo to delete exists, if not return 404
-	result := common.DB.First(&models.Todo{ID: ID})
+	result := common.DB.First(&entities.Todo{ID: ID})
 	if result.Error != nil {
 		zap.L().Error("Failed to find todo to delete",
 			zap.Error(result.Error),
@@ -226,7 +201,7 @@ func DeleteTodo(context *gin.Context) {
 		return
 	}
 
-	result = common.DB.Delete(&models.Todo{ID: ID})
+	result = common.DB.Delete(&entities.Todo{ID: ID})
 	if result.Error != nil {
 		zap.L().Error("Failed to delete todo",
 			zap.Error(result.Error),

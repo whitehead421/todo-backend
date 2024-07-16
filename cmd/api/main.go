@@ -6,16 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	files "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/whitehead421/todo-backend/docs"
 	"github.com/whitehead421/todo-backend/internal/handlers"
 	"github.com/whitehead421/todo-backend/pkg/common"
 )
 
-// @title Todo API
-// @version 1.0
-// @description This is a simple todo API
 func main() {
 	env := common.GetEnvironmentVariables()
 
@@ -29,12 +23,10 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	r.POST("", handlers.CreateTodo)
-	r.GET("/:id", handlers.ReadTodo)
-	r.PUT("/:id", handlers.UpdateTodo)
-	r.DELETE("/:id", handlers.DeleteTodo)
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(files.Handler))
+	r.POST("/todo", handlers.CreateTodo)
+	r.GET("/todo/:id", handlers.ReadTodo)
+	r.PUT("/todo/:id", handlers.UpdateTodo)
+	r.DELETE("/todo/:id", handlers.DeleteTodo)
 
 	zap.L().Info(
 		"Server running",
