@@ -11,6 +11,7 @@ import (
 	"github.com/whitehead421/todo-backend/pkg/entities"
 	"github.com/whitehead421/todo-backend/pkg/models"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 var validate *validator.Validate
@@ -79,13 +80,30 @@ func ReadTodo(context *gin.Context) {
 	id := context.Param("id")
 	var todo entities.Todo
 
-	result := common.DB.Where("id = ? AND user_id = ?", id, userID).First(&todo)
+	result := common.DB.First(&todo, id)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			zap.L().Error("Todo not found",
+				zap.Error(result.Error),
+				zap.String("url path", context.Request.URL.Path),
+			)
+			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
+
 		zap.L().Error("Failed to find todo",
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if todo.UserID != userID {
+		zap.L().Error("User does not have permission to access this todo",
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this todo"})
 		return
 	}
 
@@ -121,14 +139,34 @@ func UpdateTodo(context *gin.Context) {
 		return
 	}
 
+	var todo entities.Todo
+
 	// Check if todo to update exists, if not return 404
-	result := common.DB.Where("id = ? AND user_id = ?", ID, userID).First(&entities.Todo{})
+	result := common.DB.First(&todo, id)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			zap.L().Error("Todo not found",
+				zap.Error(result.Error),
+				zap.String("url path", context.Request.URL.Path),
+			)
+			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
+
 		zap.L().Error("Failed to find todo to update",
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if todo.UserID != userID {
+		zap.L().Error("User does not have permission to access this todo",
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this todo"})
 		return
 	}
 
@@ -153,10 +191,11 @@ func UpdateTodo(context *gin.Context) {
 		return
 	}
 
-	todo := entities.Todo{
+	todo = entities.Todo{
 		ID:          ID,
 		Description: todoUpdateRequest.Description,
 		Status:      string(todoUpdateRequest.Status),
+		UserID:      userID.(uint64),
 	}
 
 	// Update todo
@@ -203,14 +242,33 @@ func DeleteTodo(context *gin.Context) {
 		return
 	}
 
+	var todo entities.Todo
+
 	// Check if todo to delete exists, if not return 404
-	result := common.DB.Where("id = ? AND user_id = ?", ID, userID).First(&entities.Todo{})
+	result := common.DB.First(&todo, id)
 	if result.Error != nil {
-		zap.L().Error("Failed to find todo to delete",
+		if result.Error == gorm.ErrRecordNotFound {
+			zap.L().Error("Todo not found",
+				zap.Error(result.Error),
+				zap.String("url path", context.Request.URL.Path),
+			)
+			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
+
+		zap.L().Error("Failed to find todo",
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if todo.UserID != userID {
+		zap.L().Error("User does not have permission to access this todo",
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this todo"})
 		return
 	}
 
