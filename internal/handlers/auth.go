@@ -14,7 +14,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var secretKey = []byte("secret-key")
+var env = common.GetEnvironmentVariables()
+
+var secretKey = []byte(env.JwtSecret)
 
 func Register(context *gin.Context) {
 	var registerRequest models.RegisterRequest
@@ -121,7 +123,7 @@ func Login(context *gin.Context) {
 		return
 	}
 
-	token, err := createToken(user.ID)
+	token, err := CreateToken(user.ID)
 	if err != nil {
 		zap.L().Error("Failed to create token",
 			zap.Error(err),
@@ -154,7 +156,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func createToken(id uint64) (string, error) {
+func CreateToken(id uint64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"id":  id,
@@ -169,7 +171,7 @@ func createToken(id uint64) (string, error) {
 	return tokenString, nil
 }
 
-func validateToken(tokenString string) (string, error) {
+func ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
