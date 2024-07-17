@@ -38,6 +38,15 @@ func main() {
 		todoRoutes.DELETE("/:id", handlers.DeleteTodo)
 	}
 
+	// Protected user routes
+	userRoutes := r.Group("/user")
+	userRoutes.Use(middlewares.AuthenticationMiddleware())
+	{
+		userRoutes.GET("/", handlers.GetUser)
+		userRoutes.DELETE("/", handlers.DeleteUser)
+		userRoutes.PUT("/", handlers.ChangePassword)
+	}
+
 	zap.L().Info(
 		"Server running",
 		zap.String("port", env.ApplicationPort),
