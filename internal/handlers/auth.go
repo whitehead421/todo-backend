@@ -11,7 +11,6 @@ import (
 	"github.com/whitehead421/todo-backend/pkg/entities"
 	"github.com/whitehead421/todo-backend/pkg/models"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var secretKey = []byte(common.GetEnvironmentVariables().JwtSecret)
@@ -38,7 +37,7 @@ func Register(context *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := HashPassword(registerRequest.Password)
+	hashedPassword, err := common.HashPassword(registerRequest.Password)
 	if err != nil {
 		zap.L().Error("Failed to hash password",
 			zap.Error(err),
@@ -113,7 +112,7 @@ func Login(context *gin.Context) {
 		return
 	}
 
-	if !CheckPasswordHash(loginRequest.Password, user.Password) {
+	if !common.CheckPasswordHash(loginRequest.Password, user.Password) {
 		zap.L().Error("Invalid password",
 			zap.String("url path", context.Request.URL.Path),
 		)
@@ -142,16 +141,6 @@ func Login(context *gin.Context) {
 	)
 
 	context.JSON(http.StatusOK, loginResponse)
-}
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
 }
 
 func CreateToken(id uint64) (string, error) {
