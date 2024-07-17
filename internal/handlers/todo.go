@@ -16,6 +16,9 @@ import (
 var validate *validator.Validate
 
 func CreateTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	var todoRequest models.TodoRequest
 
 	if err := context.ShouldBindJSON(&todoRequest); err != nil {
@@ -40,6 +43,7 @@ func CreateTodo(context *gin.Context) {
 	todo := entities.Todo{
 		Description: todoRequest.Description,
 		Status:      string(models.Pending),
+		UserID:      userID.(uint64),
 	}
 
 	result := common.DB.Create(&todo)
@@ -69,10 +73,13 @@ func CreateTodo(context *gin.Context) {
 }
 
 func ReadTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	id := context.Param("id")
 	var todo entities.Todo
 
-	result := common.DB.First(&todo, id)
+	result := common.DB.Where("id = ? AND user_id = ?", id, userID).First(&todo)
 	if result.Error != nil {
 		zap.L().Error("Failed to find todo",
 			zap.Error(result.Error),
@@ -99,6 +106,9 @@ func ReadTodo(context *gin.Context) {
 }
 
 func UpdateTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	id := context.Param("id")
 	// Check if ID is valid
 	ID, err := strconv.ParseUint(id, 10, 64)
@@ -112,7 +122,7 @@ func UpdateTodo(context *gin.Context) {
 	}
 
 	// Check if todo to update exists, if not return 404
-	result := common.DB.First(&entities.Todo{ID: ID})
+	result := common.DB.Where("id = ? AND user_id = ?", ID, userID).First(&entities.Todo{})
 	if result.Error != nil {
 		zap.L().Error("Failed to find todo to update",
 			zap.Error(result.Error),
@@ -177,6 +187,9 @@ func UpdateTodo(context *gin.Context) {
 }
 
 func DeleteTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	id := context.Param("id")
 
 	// Check if ID is valid
@@ -191,7 +204,7 @@ func DeleteTodo(context *gin.Context) {
 	}
 
 	// Check if todo to delete exists, if not return 404
-	result := common.DB.First(&entities.Todo{ID: ID})
+	result := common.DB.Where("id = ? AND user_id = ?", ID, userID).First(&entities.Todo{})
 	if result.Error != nil {
 		zap.L().Error("Failed to find todo to delete",
 			zap.Error(result.Error),
