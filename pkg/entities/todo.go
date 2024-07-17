@@ -8,6 +8,7 @@ type Todo struct {
 	ID          uint64    `gorm:"column:id;primary_key;auto_increment"`
 	Status      string    `gorm:"column:status"`
 	Description string    `gorm:"column:description"`
+	UserID      uint64    `gorm:"column:user_id"`
 	CreatedAt   time.Time `gorm:"column:created_at"`
 	UpdatedAt   time.Time `gorm:"column:updated_at"`
 }

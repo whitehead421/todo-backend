@@ -6,4 +6,3 @@ docker-compose.yml
 *.png
 *.pdf
 .history
-docs
