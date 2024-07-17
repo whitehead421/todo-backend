@@ -10,6 +10,7 @@ import (
 type Environment struct {
 	ApplicationPort string
 	DatabaseDsn     string
+	JwtSecret       string
 }
 
 func ParseVariable(key string, required bool, dft string) string {
@@ -33,5 +34,6 @@ func GetEnvironmentVariables() *Environment {
 	return &Environment{
 		ApplicationPort: ParseVariable("APPLICATION_PORT", false, "8000"),
 		DatabaseDsn:     ParseVariable("DATABASE_DSN", true, ""),
+		JwtSecret:       ParseVariable("JWT_SECRET", true, ""),
 	}
 }
