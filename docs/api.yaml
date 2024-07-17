@@ -82,7 +82,7 @@ paths:
           description: Successfully deleted
         404:
           description: Todo item not found
-  /auth/register:
+  /register:
     post:
       summary: Register a new user
       parameters:
@@ -103,6 +103,29 @@ paths:
             $ref: "#/definitions/RegisterResponse"
         500:
           description: Invalid input
+  /login:
+    post:
+      summary: Login a user
+      parameters:
+        - in: body
+          name: body
+          description: User to login
+          required: true
+          schema:
+            $ref: "#/definitions/LoginRequest"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Successfully logged in
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        400:
+          description: Invalid input
+        401:
+          description: Invalid credentials
 definitions:
   TodoInput:
     type: object
@@ -161,3 +184,17 @@ definitions:
         type: string
       updatedAt:
         type: string
+  LoginRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+  LoginResponse:
+    type: object
+    properties:
+      token:
+        type: string
+      user_id:
+        type: integer
