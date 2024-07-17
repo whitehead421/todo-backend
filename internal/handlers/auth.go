@@ -14,9 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var env = common.GetEnvironmentVariables()
-
-var secretKey = []byte(env.JwtSecret)
+var secretKey = []byte(common.GetEnvironmentVariables().JwtSecret)
 
 func Register(context *gin.Context) {
 	var registerRequest models.RegisterRequest
@@ -169,19 +167,4 @@ func CreateToken(id uint64) (string, error) {
 	}
 
 	return tokenString, nil
-}
-
-func ValidateToken(tokenString string) (string, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["id"].(string), nil
-	}
-
-	return "", err
 }
