@@ -23,7 +23,7 @@ func GetUser(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(500, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -40,7 +40,7 @@ func GetUser(context *gin.Context) {
 		zap.String("url path", context.Request.URL.Path),
 	)
 
-	context.JSON(200, response)
+	context.JSON(http.StatusOK, response)
 }
 
 func DeleteUser(context *gin.Context) {
@@ -54,7 +54,7 @@ func DeleteUser(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(500, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -64,7 +64,7 @@ func DeleteUser(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(500, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -73,7 +73,7 @@ func DeleteUser(context *gin.Context) {
 		zap.String("url path", context.Request.URL.Path),
 	)
 
-	context.JSON(200, gin.H{"message": "You successfully deleted your account."})
+	context.JSON(http.StatusOK, gin.H{"message": "You successfully deleted your account."})
 }
 
 func ChangePassword(context *gin.Context) {
@@ -87,7 +87,7 @@ func ChangePassword(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(500, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -98,7 +98,7 @@ func ChangePassword(context *gin.Context) {
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(400, gin.H{"error": err.Error()})
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -108,7 +108,7 @@ func ChangePassword(context *gin.Context) {
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(400, gin.H{"error": err.Error()})
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -126,7 +126,7 @@ func ChangePassword(context *gin.Context) {
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(500, gin.H{"error": err.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -138,7 +138,7 @@ func ChangePassword(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(500, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -147,5 +147,5 @@ func ChangePassword(context *gin.Context) {
 		zap.String("url path", context.Request.URL.Path),
 	)
 
-	context.JSON(200, gin.H{"message": "You successfully changed your password."})
+	context.JSON(http.StatusOK, gin.H{"message": "You successfully changed your password."})
 }
