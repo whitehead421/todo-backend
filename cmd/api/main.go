@@ -8,6 +8,7 @@ import (
 
 	"github.com/whitehead421/todo-backend/internal/handlers"
 	"github.com/whitehead421/todo-backend/pkg/common"
+	"github.com/whitehead421/todo-backend/pkg/middlewares"
 )
 
 func main() {
@@ -23,13 +24,19 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	r.POST("/todo", handlers.CreateTodo)
-	r.GET("/todo/:id", handlers.ReadTodo)
-	r.PUT("/todo/:id", handlers.UpdateTodo)
-	r.DELETE("/todo/:id", handlers.DeleteTodo)
+	// Public routes
+	r.POST("/register", handlers.Register)
+	r.POST("/login", handlers.Login)
 
-	r.POST("/auth/register", handlers.Register)
-	r.POST("/auth/login", handlers.Login)
+	// Protected todo routes
+	todoRoutes := r.Group("/todo")
+	todoRoutes.Use(middlewares.AuthenticationMiddleware())
+	{
+		todoRoutes.POST("/", handlers.CreateTodo)
+		todoRoutes.GET("/:id", handlers.ReadTodo)
+		todoRoutes.PUT("/:id", handlers.UpdateTodo)
+		todoRoutes.DELETE("/:id", handlers.DeleteTodo)
+	}
 
 	zap.L().Info(
 		"Server running",
