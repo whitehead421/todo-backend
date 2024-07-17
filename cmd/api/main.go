@@ -28,6 +28,7 @@ func main() {
 	r.PUT("/todo/:id", handlers.UpdateTodo)
 	r.DELETE("/todo/:id", handlers.DeleteTodo)
 
+	r.POST("/auth/register", handlers.Register)
 	zap.L().Info(
 		"Server running",
 		zap.String("port", env.ApplicationPort),
