@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/whitehead421/todo-backend/pkg/common"
+	"github.com/whitehead421/todo-backend/pkg/entities"
 	"go.uber.org/zap"
 )
 
@@ -34,6 +35,16 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 		if err != nil {
 			zap.L().Error("Invalid token", zap.Error(err))
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		// Check if the user still exists
+		var user entities.User
+		result := common.DB.First(&user, id)
+		if result.Error != nil {
+			zap.L().Error("User not found for authentication middleware", zap.Error(result.Error))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is not valid anymore or user does not exist"})
 			c.Abort()
 			return
 		}
