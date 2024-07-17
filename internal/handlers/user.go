@@ -23,7 +23,7 @@ func GetUser(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
 	}
 
@@ -54,7 +54,7 @@ func DeleteUser(context *gin.Context) {
 			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
 	}
 
