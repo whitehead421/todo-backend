@@ -27,6 +27,8 @@ paths:
             $ref: "#/definitions/Todo"
         500:
           description: Invalid input
+          schema:
+            $ref: "#/definitions/BaseError"
   /todo/{id}:
     get:
       summary: Get a todo item by id
@@ -42,6 +44,10 @@ paths:
           description: Successfully retrieved
           schema:
             $ref: "#/definitions/Todo"
+        403:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/BaseError"
         404:
           description: Todo item not found
     put:
@@ -66,6 +72,10 @@ paths:
           description: Successfully updated
           schema:
             $ref: "#/definitions/Todo"
+        403:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/BaseError"
         404:
           description: Todo item not found
     delete:
@@ -80,8 +90,15 @@ paths:
       responses:
         200:
           description: Successfully deleted
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        403:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/BaseError"
         404:
           description: Todo item not found
+
   /register:
     post:
       summary: Register a new user
@@ -103,6 +120,8 @@ paths:
             $ref: "#/definitions/RegisterResponse"
         500:
           description: Invalid input
+          schema:
+            $ref: "#/definitions/BaseError"
   /login:
     post:
       summary: Login a user
@@ -126,7 +145,72 @@ paths:
           description: Invalid input
         401:
           description: Invalid credentials
+  /user:
+    get:
+      summary: Get the current user
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Successfully retrieved
+          schema:
+            $ref: "#/definitions/GetUserResponse"
+        404:
+          description: Failed to find user
+          schema:
+            $ref: "#/definitions/BaseError"
+    delete:
+      summary: Delete the current user
+      responses:
+        200:
+          description: Successfully deleted
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        404:
+          description: Failed to find user
+          schema:
+            $ref: "#/definitions/BaseError"
+    put:
+      summary: CHange password of the current user
+      parameters:
+        - in: body
+          name: body
+          description: New password
+          required: true
+          schema:
+            $ref: "#/definitions/ChangePasswordRequest"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Successfully updated
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        400:
+          description: Invalid input
+          schema:
+            $ref: "#/definitions/BaseError"
+        401:
+          description: Invalid credentials
+          schema:
+            $ref: "#/definitions/BaseError"
+        500:
+          description: Failed to hash password
+          schema:
+            $ref: "#/definitions/BaseError"
 definitions:
+  BaseSuccess:
+    type: object
+    properties:
+      message:
+        type: string
+  BaseError:
+    type: object
+    properties:
+      error:
+        type: string
   TodoInput:
     type: object
     properties:
@@ -198,3 +282,23 @@ definitions:
         type: string
       user_id:
         type: integer
+  GetUserResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      email:
+        type: string
+      name:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  ChangePasswordRequest:
+    type: object
+    properties:
+      old_password:
+        type: string
+      new_password:
+        type: string
