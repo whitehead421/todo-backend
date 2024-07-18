@@ -3,12 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/whitehead421/todo-backend/internal/handlers"
 	"github.com/whitehead421/todo-backend/pkg/common"
-	"github.com/whitehead421/todo-backend/pkg/middlewares"
 )
 
 func main() {
@@ -24,42 +21,8 @@ func main() {
 	// Initialize Redis
 	common.InitRedis(env.RedisAddr)
 
-	// Create a new context
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
-
-	// Public routes
-	r.POST("/register", handlers.Register)
-	r.POST("/login", handlers.Login)
-	r.POST("/logout", middlewares.AuthenticationMiddleware(), handlers.Logout)
-
-	// Protected todo routes
-	todoRoutes := r.Group("/todo")
-	todoRoutes.Use(middlewares.AuthenticationMiddleware())
-	{
-		todoRoutes.POST("/", handlers.CreateTodo)
-		todoRoutes.GET("/:id", handlers.ReadTodo)
-		todoRoutes.PUT("/:id", handlers.UpdateTodo)
-		todoRoutes.DELETE("/:id", handlers.DeleteTodo)
-	}
-
-	// Protected user routes
-	userRoutes := r.Group("/user")
-	userRoutes.Use(middlewares.AuthenticationMiddleware())
-	{
-		userRoutes.GET("/", handlers.GetUser)
-		userRoutes.DELETE("/", handlers.DeleteUser)
-		userRoutes.PUT("/", handlers.ChangePassword)
-	}
-
-	r.GET("redis-keys", func(c *gin.Context) {
-		keys, err := common.RedisClient.Keys(c, "*").Result()
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, gin.H{"keys": keys})
-	})
+	// Initialize routes
+	r := InitializeRoutes()
 
 	zap.L().Info(
 		"Server running",

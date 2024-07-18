@@ -14,9 +14,24 @@ import (
 	"gorm.io/gorm"
 )
 
-var validate *validator.Validate
+type TodoHandler interface {
+	CreateTodo(context *gin.Context)
+	ReadTodo(context *gin.Context)
+	UpdateTodo(context *gin.Context)
+	DeleteTodo(context *gin.Context)
+}
 
-func CreateTodo(context *gin.Context) {
+type todoHandler struct {
+	validate *validator.Validate
+}
+
+func NewTodoHandler() TodoHandler {
+	return &todoHandler{
+		validate: validator.New(),
+	}
+}
+
+func (h *todoHandler) CreateTodo(context *gin.Context) {
 	// Ignoring exists check as we are using authentication middleware, so it should always exist
 	userID, _ := context.Get("userID")
 
@@ -31,8 +46,7 @@ func CreateTodo(context *gin.Context) {
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.Struct(todoRequest); err != nil {
+	if err := h.validate.Struct(todoRequest); err != nil {
 		zap.L().Error("Validation error",
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
@@ -73,7 +87,7 @@ func CreateTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-func ReadTodo(context *gin.Context) {
+func (h *todoHandler) ReadTodo(context *gin.Context) {
 	// Ignoring exists check as we are using authentication middleware, so it should always exist
 	userID, _ := context.Get("userID")
 
@@ -123,7 +137,7 @@ func ReadTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-func UpdateTodo(context *gin.Context) {
+func (h *todoHandler) UpdateTodo(context *gin.Context) {
 	// Ignoring exists check as we are using authentication middleware, so it should always exist
 	userID, _ := context.Get("userID")
 
@@ -181,8 +195,7 @@ func UpdateTodo(context *gin.Context) {
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.StructPartial(todoUpdateRequest); err != nil {
+	if err := h.validate.StructPartial(todoUpdateRequest); err != nil {
 		zap.L().Error("Validation error",
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
@@ -225,7 +238,7 @@ func UpdateTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-func DeleteTodo(context *gin.Context) {
+func (h *todoHandler) DeleteTodo(context *gin.Context) {
 	// Ignoring exists check as we are using authentication middleware, so it should always exist
 	userID, _ := context.Get("userID")
 
