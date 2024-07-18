@@ -22,7 +22,7 @@ func main() {
 	common.ConnectDatabase(env.DatabaseDsn)
 
 	// Initialize Redis
-	common.InitRedis()
+	common.InitRedis(env.RedisAddr)
 
 	// Create a new context
 	gin.SetMode(gin.ReleaseMode)
