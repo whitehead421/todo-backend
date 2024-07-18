@@ -11,6 +11,7 @@ type Environment struct {
 	ApplicationPort string
 	DatabaseDsn     string
 	JwtSecret       string
+	RedisAddr       string
 }
 
 func ParseVariable(key string, required bool, dft string) string {
@@ -35,5 +36,6 @@ func GetEnvironmentVariables() *Environment {
 		ApplicationPort: ParseVariable("APPLICATION_PORT", false, "8000"),
 		DatabaseDsn:     ParseVariable("DATABASE_DSN", true, ""),
 		JwtSecret:       ParseVariable("JWT_SECRET", true, ""),
+		RedisAddr:       ParseVariable("REDIS_ADDR", true, ""),
 	}
 }

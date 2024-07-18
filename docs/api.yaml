@@ -145,6 +145,18 @@ paths:
           description: Invalid input
         401:
           description: Invalid credentials
+  /logout:
+    post:
+      summary: Logout the current user
+      responses:
+        200:
+          description: Successfully logged out
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        500:
+          description: Failed to invoke token
+          schema:
+            $ref: "#/definitions/BaseError"
   /user:
     get:
       summary: Get the current user
