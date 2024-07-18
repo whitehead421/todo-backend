@@ -143,6 +143,22 @@ func Login(context *gin.Context) {
 	context.JSON(http.StatusOK, loginResponse)
 }
 
+func Logout(context *gin.Context) {
+	// Add the token to the blacklist
+	authHeader := context.GetHeader("Authorization")
+
+	tokenString := authHeader[len("Bearer "):]
+	expiration := time.Hour // Token stays in blacklist for 1 hour
+
+	err := common.BlacklistToken(tokenString, expiration, context)
+	if err != nil {
+		context.JSON(500, gin.H{"error": "Failed to blacklist token"})
+		return
+	}
+
+	context.JSON(200, gin.H{"message": "Successfully logged out"})
+}
+
 func CreateToken(id uint64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{

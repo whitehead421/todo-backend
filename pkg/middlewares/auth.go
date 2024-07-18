@@ -39,6 +39,22 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// Check if the token is inside the redis blacklist or not
+		blacklisted, err := common.RedisClient.Get(c, tokenString).Result()
+		if err != nil && err.Error() != "redis: nil" {
+			zap.L().Error("Failed to check if token is blacklisted", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check if token is blacklisted"})
+			c.Abort()
+			return
+		}
+
+		if blacklisted != "" {
+			zap.L().Error("Token is blacklisted")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "This token is no longer valid"})
+			c.Abort()
+			return
+		}
+
 		// Check if the user still exists
 		var user entities.User
 		result := common.DB.First(&user, id)
