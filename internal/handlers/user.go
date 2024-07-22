@@ -135,17 +135,7 @@ func (h *userHandler) ChangePassword(context *gin.Context) {
 		return
 	}
 
-	hash, err := common.HashPassword(request.NewPassword)
-	if err != nil {
-		zap.L().Error("Failed to hash password",
-			zap.Error(err),
-			zap.String("url path", context.Request.URL.Path),
-		)
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	user.Password = hash
+	user.Password = common.HashPassword(request.NewPassword)
 
 	result = common.DB.Save(&user)
 	if result.Error != nil {

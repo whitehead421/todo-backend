@@ -49,20 +49,10 @@ func (h *authHandler) Register(context *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := common.HashPassword(registerRequest.Password)
-	if err != nil {
-		zap.L().Error("Failed to hash password",
-			zap.Error(err),
-			zap.String("url path", context.Request.URL.Path),
-		)
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	user := entities.User{
 		Email:    registerRequest.Email,
 		Name:     registerRequest.Name,
-		Password: hashedPassword,
+		Password: common.HashPassword(registerRequest.Password),
 	}
 
 	result := common.DB.Create(&user)

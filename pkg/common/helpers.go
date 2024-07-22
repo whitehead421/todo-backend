@@ -9,11 +9,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type ICommon interface {
+	HashPassword(password string) string
+	CheckPasswordHash(password, hash string) bool
+	BlacklistToken(tokenString string, expiration time.Duration, ctx context.Context) error
+	IsTokenBlacklisted(tokenString string, ctx context.Context) (bool, error)
+	CreateToken(id uint64) (string, error)
+}
+
 var secretKey = []byte(GetEnvironmentVariables().JwtSecret)
 
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+func HashPassword(password string) string {
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes)
 }
 
 func CheckPasswordHash(password, hash string) bool {
