@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 var RedisClient *redis.Client
@@ -13,5 +13,9 @@ func InitRedis(addr string) {
 		DB:       0,
 	})
 
+	RedisClient = client
+}
+
+func SetRedisClient(client *redis.Client) {
 	RedisClient = client
 }
