@@ -12,8 +12,14 @@ func SetupTestDB() *gorm.DB {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
-	db.AutoMigrate(&entities.User{})
-	db.AutoMigrate(&entities.Todo{})
+	err := db.AutoMigrate(&entities.User{})
+	if err != nil {
+		panic(err)
+	}
 
+	err = db.AutoMigrate(&entities.Todo{})
+	if err != nil {
+		panic(err)
+	}
 	return db
 }

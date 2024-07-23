@@ -13,7 +13,12 @@ func main() {
 
 	// Initialize logger
 	logger := common.InitLogger()
-	defer logger.Sync() // flushes buffer, if any
+	defer func() {
+		err := logger.Sync() // flushes buffer, if any
+		if err != nil {
+			zap.L().Error("Failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	// Connect to database
 	common.ConnectDatabase(env.DatabaseDsn)
@@ -28,5 +33,8 @@ func main() {
 		"Server running",
 		zap.String("port", env.ApplicationPort),
 	)
-	r.Run(fmt.Sprintf(":%s", env.ApplicationPort))
+	err := r.Run(fmt.Sprintf(":%s", env.ApplicationPort))
+	if err != nil {
+		zap.L().Fatal("Failed to start server", zap.Error(err))
+	}
 }
