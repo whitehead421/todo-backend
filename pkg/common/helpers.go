@@ -5,12 +5,23 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	return string(bytes), err
+type ICommon interface {
+	HashPassword(password string) string
+	CheckPasswordHash(password, hash string) bool
+	BlacklistToken(tokenString string, expiration time.Duration, ctx context.Context) error
+	IsTokenBlacklisted(tokenString string, ctx context.Context) (bool, error)
+	CreateToken(id uint64) (string, error)
+}
+
+var secretKey = []byte(GetEnvironmentVariables().JwtSecret)
+
+func HashPassword(password string) string {
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes)
 }
 
 func CheckPasswordHash(password, hash string) bool {
@@ -29,4 +40,19 @@ func IsTokenBlacklisted(tokenString string, ctx context.Context) (bool, error) {
 		return false, nil
 	}
 	return val == "blacklisted", err
+}
+
+func CreateToken(id uint64) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"id":  id,
+			"exp": time.Now().Add(time.Hour).Unix(),
+		})
+
+	tokenString, err := token.SignedString(secretKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

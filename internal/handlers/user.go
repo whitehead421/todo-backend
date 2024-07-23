@@ -12,7 +12,23 @@ import (
 	"go.uber.org/zap"
 )
 
-func GetUser(context *gin.Context) {
+type UserHandler interface {
+	GetUser(context *gin.Context)
+	DeleteUser(context *gin.Context)
+	ChangePassword(context *gin.Context)
+}
+
+type userHandler struct {
+	validate *validator.Validate
+}
+
+func NewUserHandler() UserHandler {
+	return &userHandler{
+		validate: validator.New(),
+	}
+}
+
+func (h *userHandler) GetUser(context *gin.Context) {
 	userID, _ := context.Get("userID")
 
 	var user entities.User
@@ -43,7 +59,7 @@ func GetUser(context *gin.Context) {
 	context.JSON(http.StatusOK, response)
 }
 
-func DeleteUser(context *gin.Context) {
+func (h *userHandler) DeleteUser(context *gin.Context) {
 	userID, _ := context.Get("userID")
 
 	var user entities.User
@@ -76,7 +92,7 @@ func DeleteUser(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{"message": "You successfully deleted your account."})
 }
 
-func ChangePassword(context *gin.Context) {
+func (h *userHandler) ChangePassword(context *gin.Context) {
 	userID, _ := context.Get("userID")
 
 	var user entities.User
@@ -102,8 +118,7 @@ func ChangePassword(context *gin.Context) {
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.Struct(request); err != nil {
+	if err := h.validate.Struct(request); err != nil {
 		zap.L().Error("Validation error",
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
@@ -120,17 +135,7 @@ func ChangePassword(context *gin.Context) {
 		return
 	}
 
-	hash, err := common.HashPassword(request.NewPassword)
-	if err != nil {
-		zap.L().Error("Failed to hash password",
-			zap.Error(err),
-			zap.String("url path", context.Request.URL.Path),
-		)
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	user.Password = hash
+	user.Password = common.HashPassword(request.NewPassword)
 
 	result = common.DB.Save(&user)
 	if result.Error != nil {

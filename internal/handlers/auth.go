@@ -6,16 +6,29 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/whitehead421/todo-backend/pkg/common"
 	"github.com/whitehead421/todo-backend/pkg/entities"
 	"github.com/whitehead421/todo-backend/pkg/models"
 	"go.uber.org/zap"
 )
 
-var secretKey = []byte(common.GetEnvironmentVariables().JwtSecret)
+type AuthHandler interface {
+	Register(context *gin.Context)
+	Login(context *gin.Context)
+	Logout(context *gin.Context)
+}
 
-func Register(context *gin.Context) {
+type authHandler struct {
+	validate *validator.Validate
+}
+
+func NewAuthHandler() AuthHandler {
+	return &authHandler{
+		validate: validator.New(),
+	}
+}
+
+func (h *authHandler) Register(context *gin.Context) {
 	var registerRequest models.RegisterRequest
 
 	if err := context.ShouldBindJSON(&registerRequest); err != nil {
@@ -27,8 +40,7 @@ func Register(context *gin.Context) {
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.Struct(registerRequest); err != nil {
+	if err := h.validate.Struct(registerRequest); err != nil {
 		zap.L().Error("Validation error",
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
@@ -37,20 +49,10 @@ func Register(context *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := common.HashPassword(registerRequest.Password)
-	if err != nil {
-		zap.L().Error("Failed to hash password",
-			zap.Error(err),
-			zap.String("url path", context.Request.URL.Path),
-		)
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
 	user := entities.User{
 		Email:    registerRequest.Email,
 		Name:     registerRequest.Name,
-		Password: hashedPassword,
+		Password: common.HashPassword(registerRequest.Password),
 	}
 
 	result := common.DB.Create(&user)
@@ -79,7 +81,7 @@ func Register(context *gin.Context) {
 	context.JSON(http.StatusCreated, registerResponse)
 }
 
-func Login(context *gin.Context) {
+func (h *authHandler) Login(context *gin.Context) {
 	var loginRequest models.LoginRequest
 
 	if err := context.ShouldBindJSON(&loginRequest); err != nil {
@@ -91,8 +93,7 @@ func Login(context *gin.Context) {
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.Struct(loginRequest); err != nil {
+	if err := h.validate.Struct(loginRequest); err != nil {
 		zap.L().Error("Validation error",
 			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
@@ -120,7 +121,7 @@ func Login(context *gin.Context) {
 		return
 	}
 
-	token, err := CreateToken(user.ID)
+	token, err := common.CreateToken(user.ID)
 	if err != nil {
 		zap.L().Error("Failed to create token",
 			zap.Error(err),
@@ -143,7 +144,7 @@ func Login(context *gin.Context) {
 	context.JSON(http.StatusOK, loginResponse)
 }
 
-func Logout(context *gin.Context) {
+func (h *authHandler) Logout(context *gin.Context) {
 	// Add the token to the blacklist
 	authHeader := context.GetHeader("Authorization")
 
@@ -157,19 +158,4 @@ func Logout(context *gin.Context) {
 	}
 
 	context.JSON(200, gin.H{"message": "Successfully logged out"})
-}
-
-func CreateToken(id uint64) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"id":  id,
-			"exp": time.Now().Add(time.Hour).Unix(),
-		})
-
-	tokenString, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
 }
