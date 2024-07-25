@@ -14,7 +14,7 @@ type TodoRequest struct {
 
 type TodoUpdateRequest struct {
 	Description string `json:"description" example:"Buy milk" validate:"min=6"`
-	Status      Status `json:"status" example:"pending" validate:"required"`
+	Status      Status `json:"status" example:"pending"`
 }
 
 type TodoResponse struct {

@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
-	"github.com/whitehead421/todo-backend/internal/handlers"
 	"github.com/whitehead421/todo-backend/pkg/common"
 )
 
@@ -15,22 +13,28 @@ func main() {
 
 	// Initialize logger
 	logger := common.InitLogger()
-	defer logger.Sync() // flushes buffer, if any
+	defer func() {
+		err := logger.Sync() // flushes buffer, if any
+		if err != nil {
+			zap.L().Error("Failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	// Connect to database
 	common.ConnectDatabase(env.DatabaseDsn)
 
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.Default()
+	// Initialize Redis
+	common.InitRedis(env.RedisAddr)
 
-	r.POST("/todo", handlers.CreateTodo)
-	r.GET("/todo/:id", handlers.ReadTodo)
-	r.PUT("/todo/:id", handlers.UpdateTodo)
-	r.DELETE("/todo/:id", handlers.DeleteTodo)
+	// Initialize routes
+	r := InitializeRoutes()
 
 	zap.L().Info(
 		"Server running",
 		zap.String("port", env.ApplicationPort),
 	)
-	r.Run(fmt.Sprintf(":%s", env.ApplicationPort))
+	err := r.Run(fmt.Sprintf(":%s", env.ApplicationPort))
+	if err != nil {
+		zap.L().Fatal("Failed to start server", zap.Error(err))
+	}
 }

@@ -11,27 +11,45 @@ import (
 	"github.com/whitehead421/todo-backend/pkg/entities"
 	"github.com/whitehead421/todo-backend/pkg/models"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-var validate *validator.Validate
+type TodoHandler interface {
+	CreateTodo(context *gin.Context)
+	ReadTodo(context *gin.Context)
+	UpdateTodo(context *gin.Context)
+	DeleteTodo(context *gin.Context)
+}
 
-func CreateTodo(context *gin.Context) {
+type todoHandler struct {
+	validate *validator.Validate
+}
+
+func NewTodoHandler() TodoHandler {
+	return &todoHandler{
+		validate: validator.New(),
+	}
+}
+
+func (h *todoHandler) CreateTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	var todoRequest models.TodoRequest
 
 	if err := context.ShouldBindJSON(&todoRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.Struct(todoRequest); err != nil {
+	if err := h.validate.Struct(todoRequest); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -40,13 +58,14 @@ func CreateTodo(context *gin.Context) {
 	todo := entities.Todo{
 		Description: todoRequest.Description,
 		Status:      string(models.Pending),
+		UserID:      userID.(uint64),
 	}
 
 	result := common.DB.Create(&todo)
 	if result.Error != nil {
 		zap.L().Error("Failed to create todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -68,17 +87,37 @@ func CreateTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-func ReadTodo(context *gin.Context) {
+func (h *todoHandler) ReadTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	id := context.Param("id")
 	var todo entities.Todo
 
 	result := common.DB.First(&todo, id)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			zap.L().Error("Todo not found",
+				zap.String("url path", context.Request.URL.Path),
+				zap.Error(result.Error),
+			)
+			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
+
 		zap.L().Error("Failed to find todo",
+			zap.String("url path", context.Request.URL.Path),
 			zap.Error(result.Error),
+		)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if todo.UserID != userID {
+		zap.L().Error("User does not have permission to access this todo",
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this todo"})
 		return
 	}
 
@@ -98,27 +137,50 @@ func ReadTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-func UpdateTodo(context *gin.Context) {
+func (h *todoHandler) UpdateTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	id := context.Param("id")
 	// Check if ID is valid
 	ID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		zap.L().Error("Invalid ID",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
+	var todo entities.Todo
+
 	// Check if todo to update exists, if not return 404
-	result := common.DB.First(&entities.Todo{ID: ID})
+	result := common.DB.First(&todo, id)
 	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			zap.L().Error("Todo not found",
+				zap.String("url path", context.Request.URL.Path),
+				zap.Error(result.Error),
+			)
+			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
+
 		zap.L().Error("Failed to find todo to update",
+			zap.String("url path", context.Request.URL.Path),
 			zap.Error(result.Error),
+		)
+
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if todo.UserID != userID {
+		zap.L().Error("User does not have permission to access this todo",
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this todo"})
 		return
 	}
 
@@ -126,35 +188,35 @@ func UpdateTodo(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&todoUpdateRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	validate = validator.New()
-	if err := validate.StructPartial(todoUpdateRequest); err != nil {
+	if err := h.validate.StructPartial(todoUpdateRequest); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	todo := entities.Todo{
+	todo = entities.Todo{
 		ID:          ID,
 		Description: todoUpdateRequest.Description,
 		Status:      string(todoUpdateRequest.Status),
+		UserID:      userID.(uint64),
 	}
 
 	// Update todo
 	result = common.DB.Save(&todo)
 	if result.Error != nil {
 		zap.L().Error("Failed to update todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -176,36 +238,58 @@ func UpdateTodo(context *gin.Context) {
 	context.JSON(http.StatusOK, todoResponse)
 }
 
-func DeleteTodo(context *gin.Context) {
+func (h *todoHandler) DeleteTodo(context *gin.Context) {
+	// Ignoring exists check as we are using authentication middleware, so it should always exist
+	userID, _ := context.Get("userID")
+
 	id := context.Param("id")
 
 	// Check if ID is valid
 	ID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		zap.L().Error("Invalid ID",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
+	var todo entities.Todo
+
 	// Check if todo to delete exists, if not return 404
-	result := common.DB.First(&entities.Todo{ID: ID})
+	result := common.DB.First(&todo, id)
 	if result.Error != nil {
-		zap.L().Error("Failed to find todo to delete",
+		if result.Error == gorm.ErrRecordNotFound {
+			zap.L().Error("Todo not found",
+				zap.String("url path", context.Request.URL.Path),
+				zap.Error(result.Error),
+			)
+			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
+			return
+		}
+
+		zap.L().Error("Failed to find todo",
+			zap.String("url path", context.Request.URL.Path),
 			zap.Error(result.Error),
+		)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	if todo.UserID != userID {
+		zap.L().Error("User does not have permission to access this todo",
 			zap.String("url path", context.Request.URL.Path),
 		)
-		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
+		context.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this todo"})
 		return
 	}
 
 	result = common.DB.Delete(&entities.Todo{ID: ID})
 	if result.Error != nil {
 		zap.L().Error("Failed to delete todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return

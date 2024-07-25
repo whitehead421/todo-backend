@@ -20,3 +20,7 @@ func ConnectDatabase(dsn string) {
 	zap.L().Info("Connected to database")
 	DB = db
 }
+
+func SetDB(db *gorm.DB) {
+	DB = db
+}

@@ -6,4 +6,5 @@ docker-compose.yml
 *.png
 *.pdf
 .history
-docs
+bin/
+coverage.*

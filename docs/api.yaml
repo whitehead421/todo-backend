@@ -1,0 +1,316 @@
+swagger: "2.0"
+info:
+  title: API
+  description: API for managing todo items
+  version: 1.0.0
+host: localhost:8080
+basePath: /api
+paths:
+  /todo:
+    post:
+      summary: Create a new todo item
+      parameters:
+        - in: body
+          name: body
+          description: Todo item to create
+          required: true
+          schema:
+            $ref: "#/definitions/TodoInput"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Successfully created
+          schema:
+            $ref: "#/definitions/Todo"
+        500:
+          description: Invalid input
+          schema:
+            $ref: "#/definitions/BaseError"
+  /todo/{id}:
+    get:
+      summary: Get a todo item by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Successfully retrieved
+          schema:
+            $ref: "#/definitions/Todo"
+        403:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/BaseError"
+        404:
+          description: Todo item not found
+    put:
+      summary: Update a todo item by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+        - in: body
+          name: body
+          description: Todo item to update
+          required: true
+          schema:
+            $ref: "#/definitions/Todo"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Successfully updated
+          schema:
+            $ref: "#/definitions/Todo"
+        403:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/BaseError"
+        404:
+          description: Todo item not found
+    delete:
+      summary: Delete a todo item by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          type: integer
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Successfully deleted
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        403:
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/BaseError"
+        404:
+          description: Todo item not found
+
+  /register:
+    post:
+      summary: Register a new user
+      parameters:
+        - in: body
+          name: body
+          description: User to register
+          required: true
+          schema:
+            $ref: "#/definitions/RegisterRequest"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        201:
+          description: Successfully registered
+          schema:
+            $ref: "#/definitions/RegisterResponse"
+        500:
+          description: Invalid input
+          schema:
+            $ref: "#/definitions/BaseError"
+  /login:
+    post:
+      summary: Login a user
+      parameters:
+        - in: body
+          name: body
+          description: User to login
+          required: true
+          schema:
+            $ref: "#/definitions/LoginRequest"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Successfully logged in
+          schema:
+            $ref: "#/definitions/LoginResponse"
+        400:
+          description: Invalid input
+        401:
+          description: Invalid credentials
+  /logout:
+    post:
+      summary: Logout the current user
+      responses:
+        200:
+          description: Successfully logged out
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        500:
+          description: Failed to invoke token
+          schema:
+            $ref: "#/definitions/BaseError"
+  /user:
+    get:
+      summary: Get the current user
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Successfully retrieved
+          schema:
+            $ref: "#/definitions/GetUserResponse"
+        404:
+          description: Failed to find user
+          schema:
+            $ref: "#/definitions/BaseError"
+    delete:
+      summary: Delete the current user
+      responses:
+        200:
+          description: Successfully deleted
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        404:
+          description: Failed to find user
+          schema:
+            $ref: "#/definitions/BaseError"
+    put:
+      summary: CHange password of the current user
+      parameters:
+        - in: body
+          name: body
+          description: New password
+          required: true
+          schema:
+            $ref: "#/definitions/ChangePasswordRequest"
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Successfully updated
+          schema:
+            $ref: "#/definitions/BaseSuccess"
+        400:
+          description: Invalid input
+          schema:
+            $ref: "#/definitions/BaseError"
+        401:
+          description: Invalid credentials
+          schema:
+            $ref: "#/definitions/BaseError"
+        500:
+          description: Failed to hash password
+          schema:
+            $ref: "#/definitions/BaseError"
+definitions:
+  BaseSuccess:
+    type: object
+    properties:
+      message:
+        type: string
+  BaseError:
+    type: object
+    properties:
+      error:
+        type: string
+  TodoInput:
+    type: object
+    properties:
+      description:
+        type: string
+  Todo:
+    type: object
+    properties:
+      id:
+        type: integer
+      description:
+        type: string
+      status:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  RegisterRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      confirm:
+        type: string
+  RegisterResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      email:
+        type: string
+      name:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  LoginRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+  LoginResponse:
+    type: object
+    properties:
+      token:
+        type: string
+      user_id:
+        type: integer
+  GetUserResponse:
+    type: object
+    properties:
+      id:
+        type: integer
+      email:
+        type: string
+      name:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  ChangePasswordRequest:
+    type: object
+    properties:
+      old_password:
+        type: string
+      new_password:
+        type: string
