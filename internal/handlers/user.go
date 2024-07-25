@@ -36,8 +36,8 @@ func (h *userHandler) GetUser(context *gin.Context) {
 	result := common.DB.First(&user, userID)
 	if result.Error != nil {
 		zap.L().Error("Failed to find user",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
@@ -67,8 +67,8 @@ func (h *userHandler) DeleteUser(context *gin.Context) {
 	result := common.DB.First(&user, userID)
 	if result.Error != nil {
 		zap.L().Error("Failed to find user to delete",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusNotFound, gin.H{"error": result.Error.Error()})
 		return
@@ -77,8 +77,8 @@ func (h *userHandler) DeleteUser(context *gin.Context) {
 	result = common.DB.Delete(&user)
 	if result.Error != nil {
 		zap.L().Error("Failed to delete user",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -100,8 +100,8 @@ func (h *userHandler) ChangePassword(context *gin.Context) {
 	result := common.DB.First(&user, userID)
 	if result.Error != nil {
 		zap.L().Error("Failed to find user to change password",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -111,8 +111,8 @@ func (h *userHandler) ChangePassword(context *gin.Context) {
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -120,8 +120,8 @@ func (h *userHandler) ChangePassword(context *gin.Context) {
 
 	if err := h.validate.Struct(request); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -140,8 +140,8 @@ func (h *userHandler) ChangePassword(context *gin.Context) {
 	result = common.DB.Save(&user)
 	if result.Error != nil {
 		zap.L().Error("Failed to save user",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return

@@ -39,8 +39,8 @@ func (h *todoHandler) CreateTodo(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&todoRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -48,8 +48,8 @@ func (h *todoHandler) CreateTodo(context *gin.Context) {
 
 	if err := h.validate.Struct(todoRequest); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -64,8 +64,8 @@ func (h *todoHandler) CreateTodo(context *gin.Context) {
 	result := common.DB.Create(&todo)
 	if result.Error != nil {
 		zap.L().Error("Failed to create todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -98,16 +98,16 @@ func (h *todoHandler) ReadTodo(context *gin.Context) {
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			zap.L().Error("Todo not found",
-				zap.Error(result.Error),
 				zap.String("url path", context.Request.URL.Path),
+				zap.Error(result.Error),
 			)
 			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 			return
 		}
 
 		zap.L().Error("Failed to find todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -146,8 +146,8 @@ func (h *todoHandler) UpdateTodo(context *gin.Context) {
 	ID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		zap.L().Error("Invalid ID",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
@@ -160,16 +160,16 @@ func (h *todoHandler) UpdateTodo(context *gin.Context) {
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			zap.L().Error("Todo not found",
-				zap.Error(result.Error),
 				zap.String("url path", context.Request.URL.Path),
+				zap.Error(result.Error),
 			)
 			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 			return
 		}
 
 		zap.L().Error("Failed to find todo to update",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
@@ -188,8 +188,8 @@ func (h *todoHandler) UpdateTodo(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&todoUpdateRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -197,8 +197,8 @@ func (h *todoHandler) UpdateTodo(context *gin.Context) {
 
 	if err := h.validate.StructPartial(todoUpdateRequest); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -215,8 +215,8 @@ func (h *todoHandler) UpdateTodo(context *gin.Context) {
 	result = common.DB.Save(&todo)
 	if result.Error != nil {
 		zap.L().Error("Failed to update todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -248,8 +248,8 @@ func (h *todoHandler) DeleteTodo(context *gin.Context) {
 	ID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		zap.L().Error("Invalid ID",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
@@ -262,16 +262,16 @@ func (h *todoHandler) DeleteTodo(context *gin.Context) {
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			zap.L().Error("Todo not found",
-				zap.Error(result.Error),
 				zap.String("url path", context.Request.URL.Path),
+				zap.Error(result.Error),
 			)
 			context.JSON(http.StatusNotFound, gin.H{"error": "Todo not found"})
 			return
 		}
 
 		zap.L().Error("Failed to find todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -288,8 +288,8 @@ func (h *todoHandler) DeleteTodo(context *gin.Context) {
 	result = common.DB.Delete(&entities.Todo{ID: ID})
 	if result.Error != nil {
 		zap.L().Error("Failed to delete todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return

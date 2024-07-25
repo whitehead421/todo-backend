@@ -33,8 +33,8 @@ func (h *authHandler) Register(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&registerRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -42,8 +42,8 @@ func (h *authHandler) Register(context *gin.Context) {
 
 	if err := h.validate.Struct(registerRequest); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -58,8 +58,8 @@ func (h *authHandler) Register(context *gin.Context) {
 	result := common.DB.Create(&user)
 	if result.Error != nil {
 		zap.L().Error("Failed to create todo",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		return
@@ -86,8 +86,8 @@ func (h *authHandler) Login(context *gin.Context) {
 
 	if err := context.ShouldBindJSON(&loginRequest); err != nil {
 		zap.L().Error("Failed to bind JSON",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -95,8 +95,8 @@ func (h *authHandler) Login(context *gin.Context) {
 
 	if err := h.validate.Struct(loginRequest); err != nil {
 		zap.L().Error("Validation error",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -106,8 +106,8 @@ func (h *authHandler) Login(context *gin.Context) {
 	result := common.DB.Where("email = ?", loginRequest.Email).First(&user)
 	if result.Error != nil {
 		zap.L().Error("Failed to find user",
-			zap.Error(result.Error),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
@@ -124,8 +124,8 @@ func (h *authHandler) Login(context *gin.Context) {
 	token, err := common.CreateToken(user.ID)
 	if err != nil {
 		zap.L().Error("Failed to create token",
-			zap.Error(err),
 			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
