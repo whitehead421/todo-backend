@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -71,21 +72,21 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 	}
 }
 
-func ValidateToken(tokenString string) (uint64, error) {
+func ValidateToken(tokenString string) (id uint64, err error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 	if err != nil {
-		return 0, err
+		return
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		idFloat, ok := claims["id"].(float64)
 		if !ok {
-			return 0, err
+			return 0, errors.New("id is not a float64")
 		}
 		return uint64(idFloat), nil
 	}
 
-	return 0, err
+	return
 }
