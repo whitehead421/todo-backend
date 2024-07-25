@@ -34,24 +34,16 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 
 		id, err := ValidateToken(tokenString)
 		if err != nil {
-			zap.L().Error("Invalid token", zap.Error(err))
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			zap.L().Error("Token is not valid anymore.", zap.Error(err))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is not valid anymore."})
 			c.Abort()
 			return
 		}
 
-		// Check if the token is inside the redis blacklist or not
-		blacklisted, err := common.RedisClient.Get(c, tokenString).Result()
-		if err != nil && err.Error() != "redis: nil" {
-			zap.L().Error("Failed to check if token is blacklisted", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check if token is blacklisted"})
-			c.Abort()
-			return
-		}
-
-		if blacklisted != "" {
-			zap.L().Error("Token is blacklisted")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "This token is no longer valid"})
+		_, err = common.RedisClient.Get(c, tokenString).Result()
+		if err != nil {
+			zap.L().Error("Token not found in redis", zap.Error(err))
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token is not valid anymore."})
 			c.Abort()
 			return
 		}

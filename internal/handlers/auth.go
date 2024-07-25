@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -131,6 +133,16 @@ func (h *authHandler) Login(context *gin.Context) {
 		return
 	}
 
+	err = common.RedisClient.Set(context, token, "token", time.Hour).Err()
+	if err != nil {
+		zap.L().Error("Failed to set token to redis",
+			zap.String("url path", context.Request.URL.Path),
+			zap.Error(err),
+		)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	loginResponse := models.LoginResponse{
 		Token:  token,
 		UserId: user.ID,
@@ -145,17 +157,39 @@ func (h *authHandler) Login(context *gin.Context) {
 }
 
 func (h *authHandler) Logout(context *gin.Context) {
-	// Add the token to the blacklist
+	userID, _ := context.Get("userID")
 	authHeader := context.GetHeader("Authorization")
 
-	tokenString := authHeader[len("Bearer "):]
-	expiration := time.Hour // Token stays in blacklist for 1 hour
-
-	err := common.BlacklistToken(tokenString, expiration, context)
-	if err != nil {
-		context.JSON(500, gin.H{"error": "Failed to blacklist token"})
+	if authHeader == "" {
+		zap.L().Error("Authorization header is missing")
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		context.Abort()
 		return
 	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		zap.L().Error("Authorization header format must be Bearer {token}")
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
+		context.Abort()
+		return
+	}
+
+	err := common.RedisClient.Del(context, tokenString).Err()
+	if err != nil {
+		zap.L().Error("Failed to delete token from redis",
+			zap.Error(err),
+		)
+		fmt.Println(err)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete token from redis"})
+		context.Abort()
+		return
+	}
+
+	zap.L().Info("User logged out successfully",
+		zap.Uint64("user ID", userID.(uint64)),
+		zap.String("url path", context.Request.URL.Path),
+	)
 
 	context.JSON(200, gin.H{"message": "Successfully logged out"})
 }

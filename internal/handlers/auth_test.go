@@ -3,11 +3,9 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redismock/v9"
@@ -184,7 +182,10 @@ func TestLogout(t *testing.T) {
 	authHandler := handlers.NewAuthHandler()
 
 	router := gin.Default()
-	router.POST("/logout", authHandler.Logout)
+	router.POST("/logout", func(c *gin.Context) {
+		c.Set("userID", uint64(1))
+		authHandler.Logout(c)
+	})
 
 	// Mock Redis setup
 	db, mock := redismock.NewClientMock()
@@ -198,14 +199,14 @@ func TestLogout(t *testing.T) {
 		{
 			name: "Successful logout",
 			mockBehavior: func(mock redismock.ClientMock) {
-				mock.ExpectSet("xxxxxx", "blacklisted", 3600*time.Second).SetVal("OK")
+				mock.ExpectDel("token").SetVal(1)
 			},
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name: "Failed to set key in Redis",
+			name: "Failed to delete token",
 			mockBehavior: func(mock redismock.ClientMock) {
-				mock.ExpectSet("xxxxxx", "blacklisted", 3600*time.Second).SetErr(errors.New("failed to set key"))
+				mock.ExpectDel("token").SetErr(nil)
 			},
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -220,13 +221,18 @@ func TestLogout(t *testing.T) {
 			assert.NoError(t, err)
 
 			// Add Authorization header with Bearer token
-			req.Header.Set("Authorization", "Bearer xxxxxx")
+			req.Header.Set("Authorization", "Bearer token")
 
 			w := httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
 
 			assert.Equal(t, tt.expectedStatus, w.Code)
+
+			// Ensure all expectations were met
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unmet mock expectations: %v", err)
+			}
 		})
 	}
 }

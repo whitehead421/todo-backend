@@ -1,19 +1,15 @@
 package common
 
 import (
-	"context"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type ICommon interface {
 	HashPassword(password string) string
 	CheckPasswordHash(password, hash string) bool
-	BlacklistToken(tokenString string, expiration time.Duration, ctx context.Context) error
-	IsTokenBlacklisted(tokenString string, ctx context.Context) (bool, error)
 	CreateToken(id uint64) (string, error)
 }
 
@@ -27,19 +23,6 @@ func HashPassword(password string) string {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
-}
-
-func BlacklistToken(tokenString string, expiration time.Duration, ctx context.Context) error {
-	err := RedisClient.Set(ctx, tokenString, "blacklisted", expiration).Err()
-	return err
-}
-
-func IsTokenBlacklisted(tokenString string, ctx context.Context) (bool, error) {
-	val, err := RedisClient.Get(ctx, tokenString).Result()
-	if err == redis.Nil {
-		return false, nil
-	}
-	return val == "blacklisted", err
 }
 
 func CreateToken(id uint64) (string, error) {
