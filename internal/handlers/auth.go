@@ -18,6 +18,7 @@ type AuthHandler interface {
 	Register(context *gin.Context)
 	Login(context *gin.Context)
 	Logout(context *gin.Context)
+	Authorize(context *gin.Context)
 }
 
 type authHandler struct {
@@ -192,4 +193,53 @@ func (h *authHandler) Logout(context *gin.Context) {
 	)
 
 	context.JSON(200, gin.H{"message": "Successfully logged out"})
+}
+
+func (h *authHandler) Authorize(context *gin.Context) {
+	zap.L().Info("Authorize request has come: ",
+		zap.String("url path", context.Request.URL.Path),
+	)
+
+	authHeader := context.GetHeader("Authorization")
+	if authHeader == "" {
+		zap.L().Error("Authorization header is missing")
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+		context.Abort()
+		return
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+	if tokenString == authHeader {
+		zap.L().Error("Authorization header format must be Bearer {token}")
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header format must be Bearer {token}"})
+		context.Abort()
+		return
+	}
+
+	id, err := common.ValidateToken(tokenString)
+	if err != nil {
+		zap.L().Error("Token is not valid anymore.", zap.Error(err))
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Token is not valid anymore."})
+		context.Abort()
+		return
+	}
+
+	_, err = common.RedisClient.Get(context, tokenString).Result()
+	if err != nil {
+		zap.L().Error("Token not found in redis", zap.Error(err))
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Token is not valid anymore"})
+		context.Abort()
+		return
+	}
+
+	var user entities.User
+	result := common.DB.First(&user, id)
+	if result.Error != nil {
+		zap.L().Error("User not found for authentication middleware", zap.Error(result.Error))
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Token is not valid anymore or user does not exist"})
+		context.Abort()
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "Authorized", "user_id": id})
 }
