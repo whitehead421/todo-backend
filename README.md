@@ -8,8 +8,14 @@ This project aims to implement the best practices and to use technologies which 
 
 ## Usage
 
-To generate swagger documentation and run the server:
+To start services in Docker:
 
 ```bash
-make
+make up
+```
+
+To run unit tests:
+
+```bash
+make test
 ```

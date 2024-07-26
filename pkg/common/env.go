@@ -10,7 +10,9 @@ import (
 )
 
 type Environment struct {
-	ApplicationPort string
+	ApplicationHost string
+	ApiPort         string
+	AuthPort        string
 	DatabaseDsn     string
 	JwtSecret       string
 	RedisAddr       string
@@ -44,7 +46,9 @@ func GetEnvironmentVariables() *Environment {
 	}
 
 	return &Environment{
-		ApplicationPort: ParseVariable("APPLICATION_PORT", false, "8080"),
+		ApplicationHost: ParseVariable("APPLICATION_HOST", false, "localhost"),
+		ApiPort:         ParseVariable("API_PORT", false, "8080"),
+		AuthPort:        ParseVariable("AUTH_PORT", false, "8081"),
 		DatabaseDsn:     ParseVariable("DATABASE_DSN", true, ""),
 		JwtSecret:       ParseVariable("JWT_SECRET", true, ""),
 		RedisAddr:       ParseVariable("REDIS_ADDR", true, ""),

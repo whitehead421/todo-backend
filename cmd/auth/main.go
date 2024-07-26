@@ -30,10 +30,10 @@ func main() {
 	r := InitializeRoutes()
 
 	zap.L().Info(
-		"Api service is running",
-		zap.String("port", env.ApiPort),
+		"Auth service is running",
+		zap.String("port", env.AuthPort),
 	)
-	err := r.Run(fmt.Sprintf(":%s", env.ApiPort))
+	err := r.Run(fmt.Sprintf(":%s", env.AuthPort))
 	if err != nil {
 		zap.L().Fatal("Failed to start server", zap.Error(err))
 	}
