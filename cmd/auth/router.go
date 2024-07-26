@@ -19,5 +19,7 @@ func InitializeRoutes() *gin.Engine {
 
 	router.POST("/logout", middlewares.AuthenticationMiddleware(), authHandler.Logout)
 
+	router.POST("/authorize", authHandler.Authorize)
+
 	return router
 }

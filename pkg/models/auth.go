@@ -24,3 +24,8 @@ type LoginResponse struct {
 	Token  string `json:"token"`
 	UserId uint64 `json:"user_id"`
 }
+
+type AuthorizeResponse struct {
+	Message string `json:"message"`
+	UserId  uint64 `json:"user_id"`
+}
