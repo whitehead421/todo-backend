@@ -30,7 +30,7 @@ services:
   notification:
     build:
       context: .
-      dockerfile: cmd/auth/Dockerfile
+      dockerfile: cmd/notification/Dockerfile
     ports:
       - "8082:8082"
     volumes:
