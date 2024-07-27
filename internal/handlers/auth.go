@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/segmentio/kafka-go"
 	"github.com/whitehead421/todo-backend/pkg/common"
 	"github.com/whitehead421/todo-backend/pkg/entities"
 	"github.com/whitehead421/todo-backend/pkg/models"
@@ -19,6 +20,7 @@ type AuthHandler interface {
 	Login(context *gin.Context)
 	Logout(context *gin.Context)
 	Authorize(context *gin.Context)
+	Verify(context *gin.Context)
 }
 
 type authHandler struct {
@@ -52,19 +54,51 @@ func (h *authHandler) Register(context *gin.Context) {
 		return
 	}
 
-	user := entities.User{
-		Email:    registerRequest.Email,
-		Name:     registerRequest.Name,
-		Password: common.HashPassword(registerRequest.Password),
+	var user entities.User
+	result := common.DB.Where("email = ?", registerRequest.Email).First(&user)
+	if result.Error == nil {
+		zap.L().Error("This email is already registered",
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusConflict, gin.H{"error": "This email is already registered"})
+		return
 	}
 
-	result := common.DB.Create(&user)
+	user = entities.User{
+		Email:       registerRequest.Email,
+		Name:        registerRequest.Name,
+		Password:    common.HashPassword(registerRequest.Password),
+		Verified:    false,
+		VerifyToken: common.GenerateUUID(),
+	}
+
+	result = common.DB.Create(&user)
 	if result.Error != nil {
-		zap.L().Error("Failed to create todo",
+		zap.L().Error("Failed to create user",
 			zap.String("url path", context.Request.URL.Path),
 			zap.Error(result.Error),
 		)
 		context.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
+		return
+	}
+
+	env := common.GetEnvironmentVariables()
+	writer := common.NewKafkaWriter(env)
+	defer writer.Close()
+
+	err := writer.WriteMessages(context,
+		kafka.Message{
+			Key:   []byte(user.Email),
+			Value: []byte(user.VerifyToken),
+		},
+	)
+	if err != nil {
+		zap.L().Error("Failed to write message to Kafka",
+			zap.Error(err),
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send verification email", "message": err.Error()})
+		context.Abort()
 		return
 	}
 
@@ -121,6 +155,14 @@ func (h *authHandler) Login(context *gin.Context) {
 			zap.String("url path", context.Request.URL.Path),
 		)
 		context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	if !user.Verified {
+		zap.L().Error("Account is not verified",
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusUnauthorized, gin.H{"error": "Account is not verified"})
 		return
 	}
 
@@ -196,10 +238,6 @@ func (h *authHandler) Logout(context *gin.Context) {
 }
 
 func (h *authHandler) Authorize(context *gin.Context) {
-	zap.L().Info("Authorize request has come: ",
-		zap.String("url path", context.Request.URL.Path),
-	)
-
 	authHeader := context.GetHeader("Authorization")
 	if authHeader == "" {
 		zap.L().Error("Authorization header is missing")
@@ -242,4 +280,44 @@ func (h *authHandler) Authorize(context *gin.Context) {
 	}
 
 	context.JSON(http.StatusOK, gin.H{"message": "Authorized", "user_id": id})
+}
+
+func (h *authHandler) Verify(context *gin.Context) {
+	verifyToken := context.Query("token")
+	if verifyToken == "" {
+		zap.L().Error("Verify token is missing",
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusBadRequest, gin.H{"error": "Verify token is missing"})
+		return
+	}
+
+	var user entities.User
+	result := common.DB.Where("verify_token = ?", verifyToken).First(&user)
+	if result.Error != nil {
+		zap.L().Error("Failed to find user",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	user.Verified = true
+	result = common.DB.Save(&user)
+	if result.Error != nil {
+		zap.L().Error("Failed to update user",
+			zap.Error(result.Error),
+			zap.String("url path", context.Request.URL.Path),
+		)
+		context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+		return
+	}
+
+	zap.L().Info("User verified successfully",
+		zap.Uint64("user ID", user.ID),
+		zap.String("url path", context.Request.URL.Path),
+	)
+
+	context.JSON(http.StatusOK, gin.H{"message": "Account verified successfully"})
 }

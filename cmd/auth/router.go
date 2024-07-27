@@ -13,13 +13,12 @@ func InitializeRoutes() *gin.Engine {
 
 	router := gin.Default()
 
-	// Public routes
 	router.POST("/register", authHandler.Register)
 	router.POST("/login", authHandler.Login)
+	router.POST("/authorize", authHandler.Authorize)
+	router.GET("/verify", authHandler.Verify)
 
 	router.POST("/logout", middlewares.AuthenticationMiddleware(), authHandler.Logout)
-
-	router.POST("/authorize", authHandler.Authorize)
 
 	return router
 }
