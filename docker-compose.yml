@@ -27,6 +27,20 @@ services:
     env_file:
       - .env
 
+  notification:
+    build:
+      context: .
+      dockerfile: cmd/notification/Dockerfile
+    ports:
+      - "8082:8082"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+
   db:
     image: postgres:latest
     ports:
@@ -45,3 +59,20 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+
+  kafka:
+    image: bitnami/kafka:3.4.0
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LOG_DIRS=/tmp/kraft-combined-logs
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_INITIAL_BROKER_REGISTRATION_TIMEOUT_MS=30000
+      - ALLOW_PLAINTEXT_LISTENER=yes

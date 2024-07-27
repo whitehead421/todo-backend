@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,6 +14,7 @@ type ICommon interface {
 	CheckPasswordHash(password, hash string) bool
 	CreateToken(id uint64) (string, error)
 	ValidateToken(tokenString string) (id uint64, err error)
+	GenerateUUID() string
 }
 
 var secretKey = []byte(GetEnvironmentVariables().JwtSecret)
@@ -59,4 +61,8 @@ func ValidateToken(tokenString string) (id uint64, err error) {
 	}
 
 	return
+}
+
+func GenerateUUID() string {
+	return uuid.New().String()
 }
