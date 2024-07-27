@@ -10,12 +10,16 @@ import (
 )
 
 type Environment struct {
-	ApplicationHost string
-	ApiPort         string
-	AuthPort        string
-	DatabaseDsn     string
-	JwtSecret       string
-	RedisAddr       string
+	ApplicationHost  string
+	ApiPort          string
+	AuthPort         string
+	NotificationPort string
+	DatabaseDsn      string
+	JwtSecret        string
+	RedisAddr        string
+	KafkaBrokers     string
+	KafkaTopic       string
+	KafkaGroupID     string
 }
 
 func ParseVariable(key string, required bool, defaultValue string) string {
@@ -46,11 +50,15 @@ func GetEnvironmentVariables() *Environment {
 	}
 
 	return &Environment{
-		ApplicationHost: ParseVariable("APPLICATION_HOST", false, "localhost"),
-		ApiPort:         ParseVariable("API_PORT", false, "8080"),
-		AuthPort:        ParseVariable("AUTH_PORT", false, "8081"),
-		DatabaseDsn:     ParseVariable("DATABASE_DSN", true, ""),
-		JwtSecret:       ParseVariable("JWT_SECRET", true, ""),
-		RedisAddr:       ParseVariable("REDIS_ADDR", true, ""),
+		ApplicationHost:  ParseVariable("APPLICATION_HOST", false, "localhost"),
+		ApiPort:          ParseVariable("API_PORT", false, "8080"),
+		AuthPort:         ParseVariable("AUTH_PORT", false, "8081"),
+		NotificationPort: ParseVariable("NOTIFICATION_PORT", false, "8082"),
+		DatabaseDsn:      ParseVariable("DATABASE_DSN", true, ""),
+		JwtSecret:        ParseVariable("JWT_SECRET", true, ""),
+		RedisAddr:        ParseVariable("REDIS_ADDR", true, ""),
+		KafkaBrokers:     ParseVariable("KAFKA_BROKERS", true, ""),
+		KafkaTopic:       ParseVariable("KAFKA_TOPIC", true, ""),
+		KafkaGroupID:     ParseVariable("KAFKA_GROUP_ID", true, ""),
 	}
 }
