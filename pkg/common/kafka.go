@@ -1,14 +1,8 @@
 package common
 
 import (
-	"context"
-
 	"github.com/segmentio/kafka-go"
 )
-
-type IKafkaWriter interface {
-	WriteMessages(ctx context.Context, messages ...kafka.Message) error
-}
 
 func NewKafkaWriter(env *Environment) *kafka.Writer {
 	return kafka.NewWriter(kafka.WriterConfig{

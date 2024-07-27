@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -24,12 +25,19 @@ type AuthHandler interface {
 }
 
 type authHandler struct {
-	validate *validator.Validate
+	validate    *validator.Validate
+	kafkaWriter KafkaWriter
 }
 
-func NewAuthHandler() AuthHandler {
+type KafkaWriter interface {
+	WriteMessages(ctx context.Context, msgs ...kafka.Message) error
+	Close() error
+}
+
+func NewAuthHandler(kafkaWriter KafkaWriter) AuthHandler {
 	return &authHandler{
-		validate: validator.New(),
+		validate:    validator.New(),
+		kafkaWriter: kafkaWriter,
 	}
 }
 
@@ -82,11 +90,7 @@ func (h *authHandler) Register(context *gin.Context) {
 		return
 	}
 
-	env := common.GetEnvironmentVariables()
-	writer := common.NewKafkaWriter(env)
-	defer writer.Close()
-
-	err := writer.WriteMessages(context,
+	err := h.kafkaWriter.WriteMessages(context,
 		kafka.Message{
 			Key:   []byte(user.Email),
 			Value: []byte(user.VerifyToken),
