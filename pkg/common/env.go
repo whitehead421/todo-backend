@@ -20,6 +20,9 @@ type Environment struct {
 	KafkaBrokers     string
 	KafkaTopic       string
 	KafkaGroupID     string
+	MailjetSecretKey string
+	MailjetAPIKey    string
+	SenderEmail      string
 }
 
 func ParseVariable(key string, required bool, defaultValue string) string {
@@ -60,5 +63,8 @@ func GetEnvironmentVariables() *Environment {
 		KafkaBrokers:     ParseVariable("KAFKA_BROKERS", true, ""),
 		KafkaTopic:       ParseVariable("KAFKA_TOPIC", true, ""),
 		KafkaGroupID:     ParseVariable("KAFKA_GROUP_ID", true, ""),
+		MailjetSecretKey: ParseVariable("MAIL_SECRET", true, ""),
+		MailjetAPIKey:    ParseVariable("MAIL_API_KEY", true, ""),
+		SenderEmail:      ParseVariable("SENDER_EMAIL", true, ""),
 	}
 }

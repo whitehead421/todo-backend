@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -32,6 +33,12 @@ func main() {
 	// Kafka Reader
 	kafkaReader := common.NewKafkaReader(env)
 	defer kafkaReader.Close()
+
+	// Create a context with a cancel function
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go common.SendActivationMail(kafkaReader, ctx)
 
 	zap.L().Info(
 		"Notification service is running",
