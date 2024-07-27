@@ -15,6 +15,7 @@ FROM alpine:latest
 WORKDIR /root/
 
 COPY --from=builder /app/notification-service .
+COPY --from=builder /app/.env .
 
 RUN chmod +x /root/notification-service
 
