@@ -13,6 +13,11 @@ type AuthHandler struct {
 	mock.Mock
 }
 
+// Authorize provides a mock function with given fields: context
+func (_m *AuthHandler) Authorize(context *gin.Context) {
+	_m.Called(context)
+}
+
 // Login provides a mock function with given fields: context
 func (_m *AuthHandler) Login(context *gin.Context) {
 	_m.Called(context)
@@ -25,6 +30,11 @@ func (_m *AuthHandler) Logout(context *gin.Context) {
 
 // Register provides a mock function with given fields: context
 func (_m *AuthHandler) Register(context *gin.Context) {
+	_m.Called(context)
+}
+
+// Verify provides a mock function with given fields: context
+func (_m *AuthHandler) Verify(context *gin.Context) {
 	_m.Called(context)
 }
 

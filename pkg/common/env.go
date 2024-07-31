@@ -10,10 +10,19 @@ import (
 )
 
 type Environment struct {
-	ApplicationPort string
-	DatabaseDsn     string
-	JwtSecret       string
-	RedisAddr       string
+	ApplicationHost  string
+	ApiPort          string
+	AuthPort         string
+	NotificationPort string
+	DatabaseDsn      string
+	JwtSecret        string
+	RedisAddr        string
+	KafkaBrokers     string
+	KafkaTopic       string
+	KafkaGroupID     string
+	MailjetSecretKey string
+	MailjetAPIKey    string
+	SenderEmail      string
 }
 
 func ParseVariable(key string, required bool, defaultValue string) string {
@@ -44,9 +53,18 @@ func GetEnvironmentVariables() *Environment {
 	}
 
 	return &Environment{
-		ApplicationPort: ParseVariable("APPLICATION_PORT", false, "8080"),
-		DatabaseDsn:     ParseVariable("DATABASE_DSN", true, ""),
-		JwtSecret:       ParseVariable("JWT_SECRET", true, ""),
-		RedisAddr:       ParseVariable("REDIS_ADDR", true, ""),
+		ApplicationHost:  ParseVariable("APPLICATION_HOST", false, "localhost"),
+		ApiPort:          ParseVariable("API_PORT", false, "8080"),
+		AuthPort:         ParseVariable("AUTH_PORT", false, "8081"),
+		NotificationPort: ParseVariable("NOTIFICATION_PORT", false, "8082"),
+		DatabaseDsn:      ParseVariable("DATABASE_DSN", true, ""),
+		JwtSecret:        ParseVariable("JWT_SECRET", true, ""),
+		RedisAddr:        ParseVariable("REDIS_ADDR", true, ""),
+		KafkaBrokers:     ParseVariable("KAFKA_BROKERS", true, ""),
+		KafkaTopic:       ParseVariable("KAFKA_TOPIC", true, ""),
+		KafkaGroupID:     ParseVariable("KAFKA_GROUP_ID", true, ""),
+		MailjetSecretKey: ParseVariable("MAIL_SECRET", true, ""),
+		MailjetAPIKey:    ParseVariable("MAIL_API_KEY", true, ""),
+		SenderEmail:      ParseVariable("SENDER_EMAIL", true, ""),
 	}
 }

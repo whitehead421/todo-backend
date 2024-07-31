@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -29,11 +30,21 @@ func main() {
 	// Initialize routes
 	r := InitializeRoutes()
 
+	// Kafka Reader
+	kafkaReader := common.NewKafkaReader(env)
+	defer kafkaReader.Close()
+
+	// Create a context with a cancel function
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go common.SendActivationMail(kafkaReader, ctx)
+
 	zap.L().Info(
-		"Api service is running",
-		zap.String("port", env.ApiPort),
+		"Notification service is running",
+		zap.String("port", env.NotificationPort),
 	)
-	err := r.Run(fmt.Sprintf(":%s", env.ApiPort))
+	err := r.Run(fmt.Sprintf(":%s", env.NotificationPort))
 	if err != nil {
 		zap.L().Fatal("Failed to start server", zap.Error(err))
 	}
